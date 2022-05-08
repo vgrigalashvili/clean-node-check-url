@@ -67,12 +67,9 @@ const unifiedServer = function (req, res) {
     });
 
     req.on('end', function () {
-
         buffer += decoder.end();
-
         // Choose the handler this request should go to, if one is not found, use the notFound handler.
         const chosenHandler = typeof (router[trimmedPath]) !== 'undefined' ? router[trimmedPath] : handlers.notFound;
-
         // Construct the data object to send to the handler.
         const data = {
             'trimmedPath': trimmedPath,
@@ -86,18 +83,14 @@ const unifiedServer = function (req, res) {
         chosenHandler(data, function (statusCode, payload) {
             // Use the status code called back by the handler, or default to 200.
             statusCode = typeof (statusCode) == 'number' ? statusCode : 200;
-
             // Use the payload called back by the handler, or default to an empty object.
             payload = typeof (payload) == 'object' ? payload : {};
-
             // Convert the payload to a string.
             const payloadString = JSON.stringify(payload);
-
             // Return the response.
             res.setHeader('Content-Type', 'application/json');
             res.writeHead(statusCode);
             res.end(payloadString);
-
             // Log.
             console.log('Returning response:', statusCode, payloadString);
         });
@@ -107,5 +100,6 @@ const unifiedServer = function (req, res) {
 // Define a request router.
 const router = {
     'ping': handlers.ping,
-    'users': handlers.users
+    'users': handlers.users,
+    'tokens': handlers.tokens
 };
