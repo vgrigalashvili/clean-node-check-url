@@ -26,6 +26,7 @@ const httpsServerOptions = {
     'key': fs.readFileSync('./https/key.pem'),
     'cert': fs.readFileSync('./https/cert.pem')
 };
+
 const httpsServer = https.createServer(httpsServerOptions, function (req, res) {
     unifiedServer(req, res);
 });
@@ -39,7 +40,6 @@ httpServer.listen(config.httpPort, function () {
 httpsServer.listen(config.httpsPort, function () {
     console.log(`The HTTPS server is running in "${config.envName}" mode and listening on port: ${config.httpsPort}...`);
 });
-
 
 // All the server logic for both the http and https server.
 const unifiedServer = function (req, res) {
@@ -70,6 +70,7 @@ const unifiedServer = function (req, res) {
         buffer += decoder.end();
         // Choose the handler this request should go to, if one is not found, use the notFound handler.
         const chosenHandler = typeof (router[trimmedPath]) !== 'undefined' ? router[trimmedPath] : handlers.notFound;
+
         // Construct the data object to send to the handler.
         const data = {
             'trimmedPath': trimmedPath,
@@ -83,14 +84,18 @@ const unifiedServer = function (req, res) {
         chosenHandler(data, function (statusCode, payload) {
             // Use the status code called back by the handler, or default to 200.
             statusCode = typeof (statusCode) == 'number' ? statusCode : 200;
+
             // Use the payload called back by the handler, or default to an empty object.
             payload = typeof (payload) == 'object' ? payload : {};
+
             // Convert the payload to a string.
             const payloadString = JSON.stringify(payload);
+
             // Return the response.
             res.setHeader('Content-Type', 'application/json');
             res.writeHead(statusCode);
             res.end(payloadString);
+
             // Log.
             console.log('Returning response:', statusCode, payloadString);
         });
