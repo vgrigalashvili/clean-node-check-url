@@ -1,5 +1,5 @@
 'use strict';
-/*
+/**
  *
  * Pimary file for the API.
  *
