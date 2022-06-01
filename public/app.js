@@ -1,3 +1,4 @@
+'use strict';
 /*
  *
  * Frontend Logic for application.
@@ -78,13 +79,15 @@ app.bindLogoutButton = function () {
     document.getElementById("logoutButton").addEventListener("click", function (e) {
         // Stop it from redirecting anywhere.
         e.preventDefault();
-        // Log the user out
+        // Log the user out.
         app.logUserOut();
     });
 };
 
 // Log the user out then redirect them.
-app.logUserOut = function () {
+app.logUserOut = function (redirectUser) {
+    // Set redirectUser to default to true.
+    redirectUser = typeof (redirectUser) == 'boolean' ? redirectUser : true;
     // Get the current token id.
     const tokenId = typeof (app.config.sessionToken.id) == 'string' ? app.config.sessionToken.id : false;
     // Send the current token to the tokens endpoint to delete it.
@@ -94,9 +97,10 @@ app.logUserOut = function () {
     app.client.request(undefined, 'api/tokens', 'DELETE', queryStringObject, undefined, function (statusCode, responsePayload) {
         // Set the app.config token as false.
         app.setSessionToken(false);
-
         // Send the user to the logged out page.
-        window.location = '/session/deleted';
+        if (redirectUser) {
+            window.location = '/session/deleted';
+        }
     });
 };
 
@@ -122,7 +126,7 @@ app.bindForms = function () {
                 const elements = this.elements;
                 for (let i = 0; i < elements.length; i++) {
                     if (elements[i].type !== 'submit') {
-                        let valueOfElement = elements[i].type == 'checkbox' ? elements[i].checked : elements[i].value;
+                        const valueOfElement = elements[i].type == 'checkbox' ? elements[i].checked : elements[i].value;
                         if (elements[i].name == '_method') {
                             method = valueOfElement;
                         } else {
@@ -130,8 +134,10 @@ app.bindForms = function () {
                         }
                     }
                 }
+                // If the method is DELETE, the payload should be a queryStringObject instead.
+                const queryStringObject = method == 'DELETE' ? payload : {};
                 // Call the API.
-                app.client.request(undefined, path, method, undefined, payload, function (statusCode, responsePayload) {
+                app.client.request(undefined, path, method, queryStringObject, payload, function (statusCode, responsePayload) {
                     // Display an error on the form if needed.
                     if (statusCode !== 200) {
                         if (statusCode == 403) {
@@ -190,6 +196,12 @@ app.formResponseProcessor = function (formId, requestPayload, responsePayload) {
     if (formsWithSuccessMessages.indexOf(formId) > -1) {
         document.querySelector("#" + formId + " .formSuccess").style.display = 'block';
     }
+    // If the user just deleted their account, redirect them to the account-delete page.
+    if (formId == 'accountEdit3') {
+        app.logUserOut(false);
+        window.location = '/account/deleted';
+    }
+
 };
 
 // Get the session token from localstorage and set it in the app.config object.
@@ -245,7 +257,7 @@ app.renewToken = function (callback) {
         app.client.request(undefined, 'api/tokens', 'PUT', undefined, payload, function (statusCode, responsePayload) {
             // Display an error on the form if needed.
             if (statusCode == 200) {
-                // Get the new token details.
+                // Get the new token details
                 const queryStringObject = { 'id': currentToken.id };
                 app.client.request(undefined, 'api/tokens', 'GET', queryStringObject, undefined, function (statusCode, responsePayload) {
                     // Display an error on the form if needed.
