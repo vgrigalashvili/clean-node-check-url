@@ -1,4 +1,1 @@
-.data/
-.logs/
-https/cert.pem
-https/key.pem
+*.pem
